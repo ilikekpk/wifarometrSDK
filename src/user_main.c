@@ -101,7 +101,8 @@ void wifi_handle_event_cb(System_Event_t *evt)
 			os_printf("connected");
 
             user_tcpserver_init(80); // start tcp server
-            const char header[] = "X-Yandex-API-Key: bb46a89b-4a62-4611-9d55-84438717130a\r\n";
+            char header[YANDEX_API_KEY_BUF_SIZE + 50];
+            os_sprintf(header, "X-Yandex-API-Key: %s\r\n", calibr.yandex_api_key);
             http_get("https://api.weather.yandex.ru/v1/informers?lat=55.7887&lon=49.1221", header, http_callback_nikita);
 		break;
 	}
@@ -120,12 +121,8 @@ user_init(void)
     tm1637_init();
     uint8_t arr[] = {16,2,3,4};
     tm1637_display(arr);
-    spi_flash_read(0x90000, &calibr, sizeof(calibr_struct));
-    os_printf("val: %d\r\n", calibr.tmp_time);
-    os_printf("val: %d\r\n", calibr.prs_time);
-    os_printf("val: %d\r\n", calibr.clk_time);
-    os_printf("val: %d\r\n", calibr.brigh_adc);
-    os_printf("GMT: %s\r\n", calibr.GMT);
+    spi_flash_read(0x8c000, &calibr, sizeof(calibr_struct));
+    print_calibr();
     // for(uint8_t i = 0; i < 255; i++)
     // {
     //   //  tm1637_write_byte(i);
@@ -139,10 +136,8 @@ user_init(void)
     wifi_set_opmode(STATION_MODE);
 	struct station_config stationConf;
 	stationConf.bssid_set = 0;
-	uint8 ssid[] = "nnet";
-	uint8 pass[] = "830ol848";
-	os_memcpy(&stationConf.ssid, ssid, 32);
-	os_memcpy(&stationConf.password, pass, 64);
+	os_memcpy(&stationConf.ssid, calibr.ssid, SSID_BUF_SIZE);
+	os_memcpy(&stationConf.password, calibr.passwd, PASSWD_BUF_SIZE);
 	
 	wifi_station_set_config(&stationConf);
 	wifi_set_event_handler_cb(wifi_handle_event_cb);
