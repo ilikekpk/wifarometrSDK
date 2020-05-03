@@ -5,7 +5,8 @@
 #include "espconn.h"
 #include "mem.h"
 
-#include "web_page.h"
+#include "index_html.h"
+#include "net_sets_html.h"
 #include "calibr_struct.h"
 //char index_html[] = "<form method=\"POST\" action=\"/\"><input name=\"first\"><input name=\"second\"><input type=\"submit\"></form>";
 LOCAL struct espconn esp_conn;
@@ -13,8 +14,14 @@ LOCAL esp_tcp esptcp;
     
 #define SERVER_LOCAL_PORT         8000
 
+LOCAL char* ICACHE_FLASH_ATTR
+parse_arg(char* buf, const char* arg_name);
+
+LOCAL display_msg_t ICACHE_FLASH_ATTR
+parse_display_msg(char* buf);
+
 LOCAL void ICACHE_FLASH_ATTR
-parse_arg(char* buf, const char* arg_name, char* arg);
+build_index_html(char* index_html_with_args);
 
 LOCAL void ICACHE_FLASH_ATTR
 http_response(struct espconn *pespconn, int error, char *html_txt)
@@ -51,6 +58,7 @@ http_response(struct espconn *pespconn, int error, char *html_txt)
     }
 }
 
+
 LOCAL void ICACHE_FLASH_ATTR
 tcp_server_sent_cb(void *arg)
 {
@@ -60,7 +68,7 @@ tcp_server_sent_cb(void *arg)
 }
     
 
-#define POST_ARGUMENT_MAX_SIZE 20
+#define POST_ARGUMENT_MAX_SIZE 256
 
 LOCAL void ICACHE_FLASH_ATTR
 tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
@@ -68,62 +76,176 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
     char *ptr = 0;
     //received some data from tcp connection
     
+    char index_html_with_args[strlen(index_html) + 500];
+    memset(index_html_with_args, 0, strlen(index_html) + 500);
+
     struct espconn *pespconn = arg;
    // os_printf("tcp recv : %s \r\n", pusrdata);
     ptr = (char *)os_strstr(pusrdata, "\r\n");
     ptr[0] = '\0';
     if (os_strcmp(pusrdata, "GET / HTTP/1.1") == 0)
     {
-        http_response(pespconn, 200, (char *)index_html);
+        build_index_html(index_html_with_args);
+        http_response(pespconn, 200, (char *)index_html_with_args);
     }
     if (os_strcmp(pusrdata, "POST / HTTP/1.1") == 0)
     {
         ptr[0] = '\r';
 
-        char argument[POST_ARGUMENT_MAX_SIZE] = "";
+        char* tmp_buf;
+       // memset(&calibr, 0, sizeof(calibr_struct));
+////////////////////////////////////////////////////////////
+        tmp_buf = parse_arg(pusrdata, "first_msg");
+        calibr.first_msg = parse_display_msg(tmp_buf);
 
-        parse_arg(pusrdata, "tmpTime", argument);
-        calibr.tmp_time = atoi(argument);
-        memset(argument, 0, POST_ARGUMENT_MAX_SIZE);
-        parse_arg(pusrdata, "prsTime", argument);
-        calibr.prs_time = atoi(argument);
-        memset(argument, 0, POST_ARGUMENT_MAX_SIZE);
-        parse_arg(pusrdata, "clkTime", argument);
-        calibr.clk_time = atoi(argument);
-        memset(argument, 0, POST_ARGUMENT_MAX_SIZE);
-        parse_arg(pusrdata, "Darkest", argument);
-        calibr.dark_adc = atoi(argument);
-        memset(argument, 0, POST_ARGUMENT_MAX_SIZE);
-        parse_arg(pusrdata, "Brightest", argument);
-        calibr.brigh_adc = atoi(argument);
-        memset(argument, 0, POST_ARGUMENT_MAX_SIZE);
-        parse_arg(pusrdata, "updateTimer", argument);
-        calibr.meteo_update_timer = atoi(argument);
-        memset(argument, 0, POST_ARGUMENT_MAX_SIZE);
-        parse_arg(pusrdata, "updateClkTimer", argument);
-        calibr.clock_update_timer = atoi(argument);
-        memset(argument, 0, POST_ARGUMENT_MAX_SIZE);
-        parse_arg(pusrdata, "GMT", calibr.GMT);
+        tmp_buf = parse_arg(pusrdata, "second_msg");
+        calibr.second_msg = parse_display_msg(tmp_buf);
 
-        spi_flash_write(0x90000, &calibr, sizeof(calibr_struct));
+        tmp_buf = parse_arg(pusrdata, "third_msg");
+        calibr.third_msg = parse_display_msg(tmp_buf);
 
-        http_response(pespconn, 200, (char *)index_html);
+        tmp_buf = parse_arg(pusrdata, "fourth_msg");
+        calibr.fourth_msg = parse_display_msg(tmp_buf);
+////////////////////////////////////////////////////////////
+        tmp_buf = parse_arg(pusrdata, "first_msg_timer");
+        if(tmp_buf) calibr.first_msg_timer = atoi(tmp_buf);
+
+        tmp_buf = parse_arg(pusrdata, "second_msg_timer");
+        if(tmp_buf) calibr.second_msg_timer = atoi(tmp_buf);
+
+        tmp_buf = parse_arg(pusrdata, "third_msg_timer");
+        if(tmp_buf) calibr.third_msg_timer = atoi(tmp_buf);
+
+        tmp_buf = parse_arg(pusrdata, "fourth_msg_timer");
+        if(tmp_buf) calibr.fourth_msg_timer = atoi(tmp_buf);
+////////////////////////////////////////////////////////////
+        tmp_buf = parse_arg(pusrdata, "dark_adc");
+        if(tmp_buf) calibr.dark_adc = atoi(tmp_buf);
+
+        tmp_buf = parse_arg(pusrdata, "brigh_adc");
+        if(tmp_buf) calibr.brigh_adc = atoi(tmp_buf);
+////////////////////////////////////////////////////////////
+        tmp_buf = parse_arg(pusrdata, "meteo_update_timer");
+        if(tmp_buf) calibr.meteo_update_timer = atoi(tmp_buf);
+
+        tmp_buf = parse_arg(pusrdata, "clock_update_timer");
+        if(tmp_buf) calibr.clock_update_timer = atoi(tmp_buf);
+
+        tmp_buf = parse_arg(pusrdata, "GMT"); //temping solution
+        memcpy(calibr.GMT, tmp_buf, 10);  
+////////////////////////////////////////////////////////////
+        tmp_buf = parse_arg(pusrdata, "latitude");
+        memcpy(calibr.latitude, tmp_buf, 20);  
+
+        tmp_buf = parse_arg(pusrdata, "longitude");
+        memcpy(calibr.longitude, tmp_buf, 20); 
+////////////////////////////////////////////////////////////
+
+        spi_flash_erase_sector(0x8c);
+        uint32_t ret = spi_flash_write(0x8c000, &calibr, sizeof(calibr_struct));
+
+        print_calibr();
+
+        build_index_html(index_html_with_args);
+        http_response(pespconn, 200, (char *)index_html_with_args);
+    }
+    if (os_strcmp(pusrdata, "GET /net_sets HTTP/1.1") == 0)
+    {
+        char net_sets_html_with_args[strlen(net_sets_html) + 50];
+        os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid);
+        http_response(pespconn, 200, (char *)net_sets_html_with_args);
+    }
+    if (os_strcmp(pusrdata, "POST /net_sets HTTP/1.1") == 0)
+    {
+        ptr[0] = '\r';
+
+        memset(calibr.hostname, 0, HOSTNAME_BUF_SIZE);
+        memset(calibr.ssid, 0, SSID_BUF_SIZE);
+        memset(calibr.passwd, 0, PASSWD_BUF_SIZE);
+        memset(calibr.passwd, 0, YANDEX_API_KEY_BUF_SIZE);
+
+        char* tmp_buf;
+
+        // tmp_buf = parse_arg(pusrdata, "hostname");
+        // memcpy(calibr.hostname, tmp_buf, strlen(tmp_buf));
+
+        tmp_buf = parse_arg(pusrdata, "ssid");
+        memcpy(calibr.ssid, tmp_buf, strlen(tmp_buf));
+
+        tmp_buf = parse_arg(pusrdata, "passwd");
+        memcpy(calibr.passwd, tmp_buf, strlen(tmp_buf));
+
+        tmp_buf = parse_arg(pusrdata, "yandex_api_key");
+        memcpy(calibr.yandex_api_key, tmp_buf, strlen(tmp_buf));
+
+        spi_flash_erase_sector(0x8c);
+        spi_flash_write(0x8c000, &calibr, sizeof(calibr_struct));
+
+        print_calibr();
+
+        char net_sets_html_with_args[strlen(net_sets_html) + 50];
+        os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid);
+        http_response(pespconn, 200, (char *)net_sets_html_with_args);
     }
 }
 
 LOCAL void ICACHE_FLASH_ATTR
-parse_arg(char* buf, const char* arg_name, char* arg)
+build_index_html(char* index_html_with_args)
 {
+    os_sprintf(index_html_with_args, index_html, 
+                   calibr.first_msg, 
+                   calibr.second_msg,
+                   calibr.third_msg,
+                   calibr.fourth_msg,
+                   calibr.first_msg_timer, 
+                   calibr.second_msg_timer,
+                   calibr.third_msg_timer,
+                   calibr.fourth_msg_timer,
+                   calibr.dark_adc,
+                   calibr.brigh_adc,
+                   999,
+                   calibr.meteo_update_timer,
+                   calibr.clock_update_timer,
+                   calibr.GMT,
+                   calibr.latitude,
+                   calibr.longitude
+    );
+}
+
+LOCAL display_msg_t ICACHE_FLASH_ATTR
+parse_display_msg(char* buf)
+{
+    os_printf("buf: %s\r\n", buf);
+    if(!os_strcmp(buf, "disabled")) return DISABLED;
+    else if(!os_strcmp(buf, "temp")) return TEMP;
+    else if(!os_strcmp(buf, "feels_like")) return FEELS_LIKE;
+    else if(!os_strcmp(buf, "temp_water")) return TEMP_WATER;
+    else if(!os_strcmp(buf, "wind_speed")) return WIND_SPEED;
+    else if(!os_strcmp(buf, "wind_gust")) return WIND_GUST;
+    else if(!os_strcmp(buf, "pressure_mm")) return PRESSURE_MM;
+    else if(!os_strcmp(buf, "pressure_pa")) return PRESSURE_PA;
+    else if(!os_strcmp(buf, "humidity")) return HUMIDITY;
+    else return DISABLED;
+}
+
+
+LOCAL char* ICACHE_FLASH_ATTR
+parse_arg(char* buf, const char* arg_name)
+{
+    static char res_buf[POST_ARGUMENT_MAX_SIZE] = {0};
+    memset(res_buf, 0, POST_ARGUMENT_MAX_SIZE);
+
     char* data = (char*)os_strstr(buf, arg_name);
-    if(!data) return;
+    if(!data) return NULL;
     data = os_strstr(data, "=");
     data++; //skip '=' symbol
     for(uint8_t i = 0; i < POST_ARGUMENT_MAX_SIZE; i++)
     {
         if(data[i] == '\0' || data[i] == '&') break;
-        arg[i] = data[i];
+        res_buf[i] = data[i];
     }
-    os_printf("%s: %s\r\n", arg_name, arg);
+    return res_buf;
+    os_printf("%s: %s\r\n", arg_name, res_buf);
 }
     
 LOCAL void ICACHE_FLASH_ATTR
