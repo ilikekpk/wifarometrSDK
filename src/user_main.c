@@ -109,7 +109,7 @@ void wifi_handle_event_cb(System_Event_t *evt)
 
 void enable_softap()
 {
-    os_printf("---------------enabling softapp-------------");
+    os_printf("---------------enabling softapp-------------\r\n");
     wifi_set_opmode(SOFTAP_MODE);
     struct softap_config softapConf;
     os_memcpy(&softapConf.ssid, "Wifarometr", 10);
