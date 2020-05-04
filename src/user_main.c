@@ -5,13 +5,13 @@
 #include "os_type.h"
 #include "espconn.h"
 #include "upgrade.h"
-#include "espconn.h"
 #include "mem.h"
 
 #include "TM1637.h"
 #include "calibr_struct.h"
 #include "httpclient.h"
 #include "yandex_weather.h"
+#include "ntp_client.h"
 
 
 
@@ -102,6 +102,7 @@ void wifi_handle_event_cb(System_Event_t *evt)
             char header[YANDEX_API_KEY_BUF_SIZE + 50];
             os_sprintf(header, "X-Yandex-API-Key: %s\r\n", calibr.yandex_api_key);
             //http_get("https://api.weather.yandex.ru/v1/informers?lat=55.7887&lon=49.1221", header, http_callback_nikita);
+            ntp_get_time("0.ru.pool.ntp.org", 123);
 		break;
 	}
 }
