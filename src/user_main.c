@@ -119,6 +119,8 @@ void enable_softap()
    // softapConf.channel = 1;
     //wifi_softap_get_config_default(&softapConf);
 
+    wifi_softap_set_config(&softapConf);
+
     struct dhcps_lease dhcp_lease;
     struct ip_info info;
 
