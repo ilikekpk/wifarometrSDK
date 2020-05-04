@@ -167,11 +167,12 @@ user_init(void)
 	stationConf.bssid_set = 0;
 	os_memcpy(&stationConf.ssid, calibr.ssid, SSID_BUF_SIZE);
 	os_memcpy(&stationConf.password, calibr.passwd, PASSWD_BUF_SIZE);
+    
 	
     
     wifi_station_set_config(&stationConf);
 	wifi_set_event_handler_cb(wifi_handle_event_cb);
-	wifi_station_set_hostname("tstESP");
+	wifi_station_set_hostname(calibr.hostname);
 	
 
     

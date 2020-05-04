@@ -152,7 +152,7 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
     if (os_strcmp(pusrdata, "GET /net_sets HTTP/1.1") == 0)
     {
         char net_sets_html_with_args[strlen(net_sets_html) + 50];
-        os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid);
+        os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid, calibr.hostname);
         http_response(pespconn, 200, (char *)net_sets_html_with_args);
     }
     if (os_strcmp(pusrdata, "POST /net_sets HTTP/1.1") == 0)
@@ -169,6 +169,9 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
 
         tmp_buf = parse_arg(pusrdata, "ssid");
         if(strlen(tmp_buf) <= SSID_BUF_SIZE) memcpy(calibr.ssid, tmp_buf, strlen(tmp_buf));
+
+        tmp_buf = parse_arg(pusrdata, "hostname");
+        if(strlen(tmp_buf) <= HOSTNAME_BUF_SIZE) memcpy(calibr.hostname, tmp_buf, strlen(tmp_buf));
 
         tmp_buf = parse_arg(pusrdata, "passwd");
         if(os_strcmp(tmp_buf, "00000") != 0)
@@ -192,7 +195,7 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
         print_calibr();
 
         char net_sets_html_with_args[strlen(net_sets_html) + 50];
-        os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid);
+        os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid, calibr.hostname);
         http_response(pespconn, 200, (char *)net_sets_html_with_args);
     }
 }
