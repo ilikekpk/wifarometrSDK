@@ -161,8 +161,6 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
 
         memset(calibr.hostname, 0, HOSTNAME_BUF_SIZE);
         memset(calibr.ssid, 0, SSID_BUF_SIZE);
-        memset(calibr.passwd, 0, PASSWD_BUF_SIZE);
-        memset(calibr.passwd, 0, YANDEX_API_KEY_BUF_SIZE);
 
         char* tmp_buf;
 
@@ -170,13 +168,23 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
         // memcpy(calibr.hostname, tmp_buf, strlen(tmp_buf));
 
         tmp_buf = parse_arg(pusrdata, "ssid");
-        memcpy(calibr.ssid, tmp_buf, strlen(tmp_buf));
+        if(strlen(tmp_buf) <= SSID_BUF_SIZE) memcpy(calibr.ssid, tmp_buf, strlen(tmp_buf));
 
         tmp_buf = parse_arg(pusrdata, "passwd");
-        memcpy(calibr.passwd, tmp_buf, strlen(tmp_buf));
+        if(os_strcmp(tmp_buf, "00000") != 0)
+        {
+            os_printf("passwd: %s\r\n", tmp_buf);
+            memset(calibr.passwd, 0, PASSWD_BUF_SIZE);
+            if(strlen(tmp_buf) <= PASSWD_BUF_SIZE) memcpy(calibr.passwd, tmp_buf, strlen(tmp_buf));
+        } 
 
         tmp_buf = parse_arg(pusrdata, "yandex_api_key");
-        memcpy(calibr.yandex_api_key, tmp_buf, strlen(tmp_buf));
+        if(os_strcmp(tmp_buf, "0000000000000000") != 0)
+        {
+            os_printf("yandex_api_key: %s\r\n", tmp_buf);
+            memset(calibr.yandex_api_key, 0, YANDEX_API_KEY_BUF_SIZE);
+            if(strlen(tmp_buf) <= YANDEX_API_KEY_BUF_SIZE) memcpy(calibr.yandex_api_key, tmp_buf, strlen(tmp_buf));
+        } 
 
         spi_flash_erase_sector(0x8c);
         spi_flash_write(0x8c000, &calibr, sizeof(calibr_struct));

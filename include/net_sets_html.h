@@ -31,13 +31,13 @@ const char net_sets_html[] = \
             "<tr>"\
                  "<td>Пароль: </td>"\
                 "<td>"\
-                      "<input name=\"passwd\" type=\"password\">"\
+                       "<input name=\"passwd\" type=\"password\" value=\"00000\">"\
                 "</td>"\
             "</tr>"\
             "<tr>"\
                   "<td>Ключ Yandex-API: </td>"\
                 "<td>"\
-                     "<input name=\"yandex_api_key\">"\
+                       "<input name=\"yandex_api_key\" type=\"password\" value=\"0000000000000000\">"\
                 "</td>"\
             "</tr>"\
             "<tr>"\
