@@ -119,14 +119,24 @@ void enable_softap()
    // softapConf.channel = 1;
     //wifi_softap_get_config_default(&softapConf);
 
-     bool status = wifi_softap_set_config(&softapConf);
-	 os_printf("status: %d \r\n", status);
+    struct dhcps_lease dhcp_lease;
+    struct ip_info info;
 
-    bool dhcp_status = wifi_softap_dhcps_status();
-    os_printf("dhcp_status: %d \r\n", dhcp_status);
+    wifi_softap_dhcps_stop();
 
-    uint32_t phy_mode = wifi_get_phy_mode();
-    os_printf("phy_mode: %d \r\n", phy_mode);
+    IP4_ADDR(&info.ip,	192, 168, 1, 1);
+	IP4_ADDR(&info.gw,	192, 168, 1, 1);
+	IP4_ADDR(&info.netmask, 255, 255, 255, 0);
+    wifi_set_ip_info(SOFTAP_IF,	&info);
+
+    const char* start_ip =	"192.168.1.100";
+    const char* end_ip	= "192.168.1.105";
+    dhcp_lease.start_ip.addr =	ipaddr_addr(start_ip);
+    dhcp_lease.end_ip.addr	= ipaddr_addr(end_ip);
+    wifi_softap_set_dhcps_lease(&dhcp_lease);
+
+    wifi_softap_dhcps_start();
+
 }
 
 
