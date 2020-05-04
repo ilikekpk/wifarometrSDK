@@ -26,10 +26,10 @@ typedef enum
 
 typedef struct
 {
-    char hostname[20];
-    char ssid[20];
-    char passwd[20];
-    char yandex_api_key[128];
+    char hostname[HOSTNAME_BUF_SIZE];
+    char ssid[SSID_BUF_SIZE];
+    char passwd[PASSWD_BUF_SIZE];
+    char yandex_api_key[YANDEX_API_KEY_BUF_SIZE];
 
     display_msg_t first_msg;
     display_msg_t second_msg;
