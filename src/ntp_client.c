@@ -10,13 +10,22 @@ uint32_t ntp_epoch = 0;
 
 int ntp_port;
 
+bool isUpdated = false;
+
 void ICACHE_FLASH_ATTR
 UdpRecvCb(void *arg, char *pdata, unsigned short len)
 {
 	os_printf("---------------ntp time loaded!----------------\r\n");
     ntp_epoch = pdata[40] << 24 | pdata[41] << 16 | pdata[42] << 8 | pdata[43];
     ntp_epoch -= 2208988800;
-    os_printf("epoch: %u", ntp_epoch);
+    os_printf("epoch: %u\r\n", ntp_epoch);
+    isUpdated = true;
+}
+
+bool ICACHE_FLASH_ATTR
+get_isUpdated()
+{
+    return isUpdated;
 }
 
 void ICACHE_FLASH_ATTR
@@ -52,6 +61,7 @@ send_ntp_packet(ip_addr_t* addr, int port)
     packetBuffer[14]  = 49;
     packetBuffer[15]  = 52;
 
+    isUpdated = false;
 
 	espconn_regist_recvcb(&udp_client, UdpRecvCb);
     espconn_regist_sentcb(&udp_client, UdpSentCb);
@@ -65,6 +75,7 @@ dns_callback (const char * hostname, ip_addr_t * addr, void * arg)
 	if (addr == NULL) 
     {
 		os_printf("DNS failed for %s\n", hostname);
+        ntp_epoch = 0;
 	}
 	else 
     {
@@ -74,7 +85,7 @@ dns_callback (const char * hostname, ip_addr_t * addr, void * arg)
 }
 
 void ICACHE_FLASH_ATTR 
-ntp_get_time(const char * hostname, int port)
+ntp_get_time(const char* hostname, int port)
 {
     ntp_port = port;
 	os_printf("DNS request\n");
@@ -96,11 +107,13 @@ ntp_get_time(const char * hostname, int port)
 		if (error == ESPCONN_ARG) 
         {
 			os_printf("DNS arg error %s\n", hostname);
+            ntp_epoch = 0;
 		}
 		else 
         {
 			os_printf("DNS error code %d\n", error);
-		}
+            ntp_epoch = 0;
+        }
 		dns_callback(hostname, NULL, NULL); // Handle all DNS errors the same way.
 	}
 }
