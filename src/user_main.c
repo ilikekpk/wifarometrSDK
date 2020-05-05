@@ -27,6 +27,8 @@ static void loop();
 
 
 static os_timer_t wifi_scan_timer;
+static os_timer_t ntp_sync_timer;
+static os_timer_t meteo_sync_timer;
 
 /******************************************************************************
  * FunctionName : user_rf_cal_sector_set
@@ -99,10 +101,12 @@ void wifi_handle_event_cb(System_Event_t *evt)
 		case EVENT_STAMODE_GOT_IP:
 			os_printf("connected");
             os_timer_disarm(&wifi_scan_timer); //disable timer to ap mode
-            char header[YANDEX_API_KEY_BUF_SIZE + 50];
-            os_sprintf(header, "X-Yandex-API-Key: %s\r\n", calibr.yandex_api_key);
+            // char header[YANDEX_API_KEY_BUF_SIZE + 50];
+            // os_sprintf(header, "X-Yandex-API-Key: %s\r\n", calibr.yandex_api_key);
             //http_get("https://api.weather.yandex.ru/v1/informers?lat=55.7887&lon=49.1221", header, http_callback_nikita);
-            ntp_get_time("0.ru.pool.ntp.org", 123);
+            //ntp_get_time("0.ru.pool.ntp.org", 123);
+            meteo_sync_start();
+            ntp_sync_start();
 		break;
 	}
 }
@@ -142,6 +146,23 @@ void enable_softap()
 
 }
 
+void ICACHE_FLASH_ATTR 
+ntp_sync_start()
+{
+    ntp_get_time("0.ru.pool.ntp.org", 123);
+    os_timer_arm(&ntp_sync_timer, calibr.clock_update_timer * 1000, 0);
+}
+
+void ICACHE_FLASH_ATTR 
+meteo_sync_start()
+{
+    char header[YANDEX_API_KEY_BUF_SIZE + 50];
+    char url[100];
+    os_sprintf(url, "https://api.weather.yandex.ru/v1/informers?lat=%s&lon=%s", calibr.latitude, calibr.longitude);
+    os_sprintf(header, "X-Yandex-API-Key: %s\r\n", calibr.yandex_api_key);
+    http_get(url, header, http_callback_nikita);
+    os_timer_arm(&meteo_sync_timer, calibr.meteo_update_timer * 1000 * 60, 0);
+}
 
 void ICACHE_FLASH_ATTR 
 user_init(void)
@@ -180,8 +201,14 @@ user_init(void)
 
     
 
-     os_timer_disarm(&wifi_scan_timer);
-     os_timer_setfn(&wifi_scan_timer, (os_timer_func_t *)enable_softap, NULL);
-     os_timer_arm(&wifi_scan_timer, WIFI_SCAN_DELAY, 0); //timer for wait wifi connectinf else use softap mode
+    os_timer_disarm(&wifi_scan_timer);
+    os_timer_setfn(&wifi_scan_timer, (os_timer_func_t *)enable_softap, NULL);
+    os_timer_arm(&wifi_scan_timer, WIFI_SCAN_DELAY, 0); //timer for wait wifi connectinf else use softap mode
+
+    os_timer_disarm(&ntp_sync_timer);
+    os_timer_setfn(&ntp_sync_timer, (os_timer_func_t *)ntp_sync_start, NULL);
+
+    os_timer_disarm(&meteo_sync_timer);
+    os_timer_setfn(&meteo_sync_timer, (os_timer_func_t *)meteo_sync_start, NULL);
 
 }
