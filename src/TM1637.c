@@ -54,7 +54,7 @@ static uint8_t TubeTab[] = {
 
 /*--------------------------------
 0 b 0 0 0 0 0 0 0 0
-    * 7 6 5 4 3 2 1
+    : 7 6 5 4 3 2 1
                1
           -----------
           |         |
@@ -118,7 +118,7 @@ void tm1637_display(uint8_t* disp_data)
   send_array(seg_data);
 }
 
-void tm1637_dots_state(uint8_t state)
+void tm1637_dots_state(bool state)
 {
   dots_state = state ? 0x80 : 0;
   send_array(seg_data);
@@ -140,7 +140,7 @@ static void send_array(uint8_t* array)
 
 static void coding(uint8_t* disp_data)
 {
-  for(uint8_t i = 0;i < 4;i ++)
+  for(uint8_t i = 0; i < 4; i++)
   {
     disp_data[i] = TubeTab[disp_data[i]];
   }
