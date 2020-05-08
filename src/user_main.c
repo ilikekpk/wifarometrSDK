@@ -82,7 +82,8 @@ user_rf_cal_sector_set(void)
 }
 
 
-void ICACHE_FLASH_ATTR http_callback_nikita(char * response, int http_status, char * full_response)
+void ICACHE_FLASH_ATTR 
+http_callback_nikita(char * response, int http_status, char * full_response)
 {
 	os_printf("http_status=%d\n", http_status);	
 	if (http_status != HTTP_STATUS_GENERIC_ERROR) {
