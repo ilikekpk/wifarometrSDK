@@ -30,6 +30,8 @@ static void loop();
 static os_timer_t wifi_scan_timer;
 static os_timer_t ntp_sync_timer;
 static os_timer_t meteo_sync_timer;
+static os_timer_t display_timer;
+
 static os_timer_t test_timer;
 
 yandex_wheather_t weather = {0};
@@ -165,6 +167,86 @@ meteo_sync_start()
     os_timer_arm(&meteo_sync_timer, calibr.meteo_update_timer * 1000 * 60, 0);
 }
 
+bool ICACHE_FLASH_ATTR 
+display_data(display_msg_t current_msg)
+{
+    os_printf("------------display_data--------------\r\n");
+    os_printf("current_msg: %d\r\n", current_msg);
+    switch (current_msg)
+    {
+    case DISABLED:
+        return false;
+        break;
+    case TIME:
+        display_time(ntp_epoch);
+        break;
+    case TEMP:
+        display_temp(weather.temp);
+        break;
+    case FEELS_LIKE:
+        display_feels_like(weather.feels_like);
+        break;
+    case TEMP_WATER:
+        display_temp_water(weather.temp_water);
+        break;
+    case WIND_SPEED:
+        display_wind_speed(weather.wind_speed);
+        break;
+    case WIND_GUST:
+        display_wind_gust(weather.wind_gust);
+        break;
+    case PRESSURE_MM:
+        display_pressure_mm(weather.pressure_mm);
+        break;
+    case PRESSURE_PA:
+        return false;
+        break;
+    case HUMIDITY:
+        display_humidity(weather.humidity);
+        break;
+    }
+
+    return true;
+}
+
+void ICACHE_FLASH_ATTR 
+display_timer_start()
+{
+    os_printf("------------display_timer_start--------------\r\n");
+
+    
+
+    static uint8_t msg_num = 1;
+
+    os_printf("msg_num: %d\r\n", msg_num);
+
+    os_timer_disarm(&display_timer);
+
+    switch (msg_num)
+    {
+        case 1:
+            msg_num = 2;
+            if(display_data(calibr.first_msg)) os_timer_arm(&display_timer, calibr.first_msg_timer * 1000, 0); 
+            else display_timer_start();
+            break;
+        case 2:
+            msg_num = 3;
+            if(display_data(calibr.second_msg)) os_timer_arm(&display_timer, calibr.second_msg_timer * 1000, 0);
+            else display_timer_start();
+            break;
+        case 3:
+            msg_num = 4;
+            if(display_data(calibr.third_msg)) os_timer_arm(&display_timer, calibr.third_msg_timer * 1000, 0);
+            else display_timer_start();
+            break;
+        case 4:
+            msg_num = 1;
+            if(display_data(calibr.fourth_msg)) os_timer_arm(&display_timer, calibr.fourth_msg_timer * 1000, 0);
+            else display_timer_start();
+            break;  
+    }
+}
+
 void ICACHE_FLASH_ATTR 
 test_timer_start()
 {
@@ -225,6 +307,10 @@ user_init(void)
 
     os_timer_disarm(&meteo_sync_timer);
     os_timer_setfn(&meteo_sync_timer, (os_timer_func_t *)meteo_sync_start, NULL);
+
+    os_timer_disarm(&display_timer);
+    os_timer_setfn(&display_timer, (os_timer_func_t *)display_timer_start, NULL);
+    display_timer_start();
 
     os_timer_disarm(&test_timer);
     os_timer_setfn(&test_timer, (os_timer_func_t *)test_timer_start, NULL);
