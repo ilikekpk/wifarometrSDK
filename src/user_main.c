@@ -29,6 +29,7 @@ static void loop();
 static os_timer_t wifi_scan_timer;
 static os_timer_t ntp_sync_timer;
 static os_timer_t meteo_sync_timer;
+static os_timer_t test_timer;
 
 /******************************************************************************
  * FunctionName : user_rf_cal_sector_set
@@ -166,6 +167,19 @@ meteo_sync_start()
 }
 
 void ICACHE_FLASH_ATTR 
+test_timer_start()
+{
+    static int8_t count = 0;
+    if(count > 120) os_timer_disarm(&test_timer);
+    
+    uint8_t arr[4] = {EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL, count};
+    display_humidity(count);
+
+    count++;
+}
+
+
+void ICACHE_FLASH_ATTR 
 user_init(void)
 {
     
@@ -211,5 +225,9 @@ user_init(void)
 
     os_timer_disarm(&meteo_sync_timer);
     os_timer_setfn(&meteo_sync_timer, (os_timer_func_t *)meteo_sync_start, NULL);
+
+    os_timer_disarm(&test_timer);
+    os_timer_setfn(&test_timer, (os_timer_func_t *)test_timer_start, NULL);
+    //os_timer_arm(&test_timer, 200, 1); 
 
 }
