@@ -12,6 +12,7 @@
 #include "httpclient.h"
 #include "yandex_weather.h"
 #include "ntp_client.h"
+#include "display_api.h"
 
 
 
@@ -185,7 +186,8 @@ user_init(void)
     
    // gpio_init();
     uart_init(115200, 115200);   
-    tm1637_init();
+    //tm1637_init();
+    display_init();
     uint8_t arr[] = {16,2,3,4};
     tm1637_display(arr);
     spi_flash_read(0x8c000, &calibr, sizeof(calibr_struct));
