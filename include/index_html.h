@@ -122,6 +122,7 @@ const char index_html[] = \
 "<script>"\
       "var html = `"\
        "<option value=\"disabled\">Отключено</option>"\
+       "<option value=\"time\">Время</option>"\
        "<option value=\"temp\">Температура</option>"\
        "<option value=\"feels_like\">Ощущается</option>"\
         "<option value=\"temp_water\">Температура воды</option>"\

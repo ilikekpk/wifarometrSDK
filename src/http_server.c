@@ -228,6 +228,7 @@ parse_display_msg(char* buf)
 {
     os_printf("buf: %s\r\n", buf);
     if(!os_strcmp(buf, "disabled")) return DISABLED;
+    else if(!os_strcmp(buf, "time")) return TIME;
     else if(!os_strcmp(buf, "temp")) return TEMP;
     else if(!os_strcmp(buf, "feels_like")) return FEELS_LIKE;
     else if(!os_strcmp(buf, "temp_water")) return TEMP_WATER;

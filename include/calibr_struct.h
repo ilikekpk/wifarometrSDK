@@ -14,6 +14,7 @@ void print_calibr();
 typedef enum
 {
     DISABLED = 0,
+    TIME,
     TEMP,
     FEELS_LIKE,
     TEMP_WATER,
