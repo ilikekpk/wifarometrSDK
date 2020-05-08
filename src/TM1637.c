@@ -35,12 +35,21 @@ uint8_t Cmd_SetAddr = 0xc0;
 uint8_t dots_state = 0; // 0 - off, 0x80 - on
 
 static uint8_t TubeTab[] = {
-                            0x3f, 0x06, 0x5b, 0x4f,
+                            0x3f, 0x06, 0x5b, 0x4f, 
                             0x66, 0x6d, 0x7d, 0x07,
-                            0x7f, 0x6f, 0x77, 0x7c,
-                            0x39, 0x5e, 0x79, 0x71,
-                            0x40, 0x63
-                            };//0~9, A, b, C, d, E, F, -, °
+                            0x7f, 0x6f, 
+                            
+                            0x77, 0x7f, 0x39, 0x79,
+                            0x71, 0x3d, 0x76, 0x30, 
+                            0x1f, 0x38, 0x3f, 0x73, 
+                            0x6d, 0x3e, 0x6e,
+                            
+                            0x7c, 0x58, 0x5e, 0x74, 
+                            0x10, 0x1e, 0x30, 0x54, 
+                            0x5c, 0x67, 0x50, 0x1c,
+
+                            0x40, 0x63, 0x00, 0x49
+                            };//0~9, A~Z, a~z, -, °, \0, wind, 
 
 
 /*--------------------------------
@@ -133,8 +142,7 @@ static void coding(uint8_t* disp_data)
 {
   for(uint8_t i = 0;i < 4;i ++)
   {
-    if(disp_data[i] == 0x7f)disp_data[i] = 0;
-    else disp_data[i] = TubeTab[disp_data[i]];
+    disp_data[i] = TubeTab[disp_data[i]];
   }
 }
 
