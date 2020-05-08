@@ -7,9 +7,9 @@ typedef struct
 {
     uint32_t timestamp;
 
-    uint8_t temp;
-    uint8_t feels_like;
-    uint8_t temp_water;
+    int8_t temp;
+    int8_t feels_like;
+    int8_t temp_water;
     uint8_t wind_speed;
     uint8_t wind_gust;
     uint16_t pressure_mm;
