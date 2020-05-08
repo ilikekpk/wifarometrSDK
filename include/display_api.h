@@ -7,7 +7,7 @@ void ICACHE_FLASH_ATTR
 display_init();
 
 void ICACHE_FLASH_ATTR 
-display_time(uint32_t epoch);
+display_time(uint32_t epoch, uint8_t GMT);
 
 void ICACHE_FLASH_ATTR 
 display_temp(int8_t time);

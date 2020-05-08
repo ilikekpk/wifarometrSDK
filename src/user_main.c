@@ -178,7 +178,7 @@ display_data(display_msg_t current_msg)
         return false;
         break;
     case TIME:
-        display_time(ntp_epoch);
+        display_time(ntp_epoch, calibr.GMT);
         break;
     case TEMP:
         display_temp(weather.temp);

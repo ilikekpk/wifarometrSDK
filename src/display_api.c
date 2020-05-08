@@ -38,8 +38,9 @@ blinking_dots(bool state)
 }
 
 void ICACHE_FLASH_ATTR 
-display_time(uint32_t epoch)
+display_time(uint32_t epoch, uint8_t GMT)
 {
+    epoch += GMT * 60 * 60;
     blinking_dots(true);
     uint8_t hour = (epoch % 86400) / 3600;
     uint8_t minute = (epoch  % 3600) / 60;

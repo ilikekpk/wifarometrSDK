@@ -136,7 +136,7 @@ const char index_html[] = \
          "var options_names = [\"first_msg\", \"second_msg\", \"third_msg\", \"fourth_msg\"];"\
                  "var input_names = [\"first_msg_timer\", \"second_msg_timer\", \"third_msg_timer\", \"fourth_msg_timer\", \"dark_adc\", \"brigh_adc\", \"val_adc\", \"meteo_update_timer\", \"clock_update_timer\", \"GMT\", \"latitude\", \"longitude\"];"\
          "var option_args = [\"%d\", \"%d\", \"%d\", \"%d\"];"\
-                 "var input_args = [\"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%s\", \"%s\", \"%s\"];"\
+                 "var input_args = [\"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%d\", \"%s\", \"%s\"];"\
     "var element;"\
 ""\
           "for(var i = 0; i < 4; i++)"\
@@ -146,5 +146,8 @@ const char index_html[] = \
    "}"\
 ""\
              "for(var i = 0; i < 12; i++) document.getElementsByName(input_names[i])[0].value = input_args[i];"\
+""\
+          "if(input_args[9] > 0) document.getElementsByName(\"GMT\")[0].value = \"+\" + input_args[9];"\
+""\
 "</script>"\
 "";

@@ -23,7 +23,7 @@ void print_calibr()
 
     os_printf("meteo_update_timer: %d\r\n", calibr.meteo_update_timer);
     os_printf("clock_update_timer: %d\r\n", calibr.clock_update_timer);
-    os_printf("GMT: %s\r\n", calibr.GMT);
+    os_printf("GMT: %d\r\n", calibr.GMT);
 
     os_printf("lat: %s\r\n", calibr.latitude);
     os_printf("lon: %s\r\n", calibr.longitude);

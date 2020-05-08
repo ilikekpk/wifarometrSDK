@@ -47,7 +47,7 @@ typedef struct
 
     uint8_t meteo_update_timer;
     uint8_t clock_update_timer;
-    char GMT[20];
+    int8_t GMT;
 
     char latitude[20];
     char longitude[20];

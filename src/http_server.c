@@ -23,6 +23,9 @@ parse_display_msg(char* buf);
 LOCAL void ICACHE_FLASH_ATTR
 build_index_html(char* index_html_with_args);
 
+LOCAL int8_t ICACHE_FLASH_ATTR
+GMT_from_html_to_int(char* buf);
+
 LOCAL void ICACHE_FLASH_ATTR
 http_response(struct espconn *pespconn, int error, char *html_txt)
 {
@@ -132,7 +135,7 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
         if(tmp_buf) calibr.clock_update_timer = atoi(tmp_buf);
 
         tmp_buf = parse_arg(pusrdata, "GMT"); //temping solution
-        memcpy(calibr.GMT, tmp_buf, 10);  
+        calibr.GMT = GMT_from_html_to_int(tmp_buf);
 ////////////////////////////////////////////////////////////
         tmp_buf = parse_arg(pusrdata, "latitude");
         memcpy(calibr.latitude, tmp_buf, 20);  
@@ -198,6 +201,15 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
         os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid, calibr.hostname);
         http_response(pespconn, 200, (char *)net_sets_html_with_args);
     }
+}
+
+LOCAL int8_t ICACHE_FLASH_ATTR
+GMT_from_html_to_int(char* buf)
+{
+    char* tmp = strstr(buf, "%2B");
+    if(tmp) tmp = tmp + 3;
+    else tmp = buf;
+    return atoi(tmp);
 }
 
 LOCAL void ICACHE_FLASH_ATTR
