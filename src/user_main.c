@@ -32,6 +32,8 @@ static os_timer_t ntp_sync_timer;
 static os_timer_t meteo_sync_timer;
 static os_timer_t test_timer;
 
+yandex_wheather_t weather = {0};
+
 /******************************************************************************
  * FunctionName : user_rf_cal_sector_set
  * Description  : SDK just reversed 4 sectors, used for rf init data and paramters.
@@ -91,7 +93,6 @@ http_callback_nikita(char * response, int http_status, char * full_response)
 	if (http_status != HTTP_STATUS_GENERIC_ERROR) {
 		os_printf("strlen(full_response)=%d\n", strlen(full_response));
 		os_printf("response=%s<EOF>\n", full_response);
-        yandex_wheather_t weather = {0};
         parse_yandex_weather(full_response, &weather);
 	}
 }
@@ -104,10 +105,6 @@ void wifi_handle_event_cb(System_Event_t *evt)
 		case EVENT_STAMODE_GOT_IP:
 			os_printf("connected");
             os_timer_disarm(&wifi_scan_timer); //disable timer to ap mode
-            // char header[YANDEX_API_KEY_BUF_SIZE + 50];
-            // os_sprintf(header, "X-Yandex-API-Key: %s\r\n", calibr.yandex_api_key);
-            //http_get("https://api.weather.yandex.ru/v1/informers?lat=55.7887&lon=49.1221", header, http_callback_nikita);
-            //ntp_get_time("0.ru.pool.ntp.org", 123);
             meteo_sync_start();
             ntp_sync_start();
 		break;
@@ -154,6 +151,7 @@ ntp_sync_start()
 {
     ntp_get_time("0.ru.pool.ntp.org", 123);
     os_timer_arm(&ntp_sync_timer, calibr.clock_update_timer * 1000, 0);
+    //display_time(ntp_epoch);
 }
 
 void ICACHE_FLASH_ATTR 
