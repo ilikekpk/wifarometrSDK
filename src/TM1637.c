@@ -118,6 +118,13 @@ void tm1637_display(uint8_t* disp_data)
   send_array(seg_data);
 }
 
+void tm1637_display_raw(uint8_t* disp_data)
+{
+  for(uint8_t i = 0; i < 4; i++) seg_data[i] = disp_data[i];
+
+  send_array(seg_data);
+}
+
 void tm1637_dots_state(bool state)
 {
   dots_state = state ? 0x80 : 0;

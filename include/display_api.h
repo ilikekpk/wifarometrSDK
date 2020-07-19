@@ -30,4 +30,22 @@ display_pressure_mm(uint8_t pressure_mm);
 void ICACHE_FLASH_ATTR 
 display_humidity(uint8_t humidity);
 
+void ICACHE_FLASH_ATTR 
+wind_animation_stage(bool new_start);
+
+void ICACHE_FLASH_ATTR 
+circle_animation_stage(bool new_start);
+
+void ICACHE_FLASH_ATTR 
+display_soft_ap(uint8_t clients_quantity);
+
+void ICACHE_FLASH_ATTR 
+display_ip();
+
+void ICACHE_FLASH_ATTR 
+display_dec_byte(uint8_t byte);
+
+void ICACHE_FLASH_ATTR 
+display_clear();
+
 #endif

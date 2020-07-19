@@ -193,3 +193,104 @@ display_humidity(uint8_t humidity)
 
     tm1637_display(arr);
 }
+
+void ICACHE_FLASH_ATTR 
+wind_animation_stage(bool new_start)
+{
+    static uint8_t stage = 0;
+    static uint8_t k = 1;
+    if(new_start) stage = 0;
+    uint8_t arr[] = {EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL};
+    arr[stage] = WIND_SYMBOL;
+    tm1637_display(arr);
+    stage += k;
+    if(stage == 3 || stage == 0) k = -k; 
+}
+
+void ICACHE_FLASH_ATTR 
+circle_animation_stage(bool new_start)
+{
+    static uint8_t stage = 1;
+
+    static uint8_t raw_arr[] = {0x00, 0x00, 0x00, 0x00};
+
+    if(new_start) stage = 1;
+
+    switch (stage)
+    {
+    case 1:
+        raw_arr[0] |= 0x01;
+        break;
+    case 2:
+        raw_arr[1] |= 0x01;
+        break;
+    case 3:
+        raw_arr[2] |= 0x01;
+        break;
+    case 4:
+        raw_arr[3] |= 0x01;
+        break;
+    case 5:
+        raw_arr[3] |= 0x02;
+        break;
+    case 6:
+        raw_arr[3] |= 0x04;
+        break;
+    case 7:
+        raw_arr[3] |= 0x08;
+        break;
+    case 8:
+        raw_arr[2] |= 0x08;
+        break;
+    case 9:
+        raw_arr[1] |= 0x08;
+        break;
+    case 10:
+        raw_arr[0] |= 0x08;
+        break;
+    case 11:
+        raw_arr[0] |= 0x10;
+        break;
+    case 12:
+        raw_arr[0] |= 0x20;
+        break;
+    }
+
+    tm1637_display_raw(raw_arr);
+    if(++stage == 13) stage = 1; 
+}
+
+void ICACHE_FLASH_ATTR 
+display_soft_ap(uint8_t clients_quantity)
+{
+    uint8_t arr[] = {A_SYMBOL, P_SYMBOL, EMPTY_SYMBOL, clients_quantity};
+    tm1637_dots_state(true);
+    tm1637_display(arr);
+}
+
+void ICACHE_FLASH_ATTR 
+display_ip()
+{
+    tm1637_dots_state(true);
+    uint8_t arr[] = {1, P_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL};
+    tm1637_display(arr);
+}
+
+void ICACHE_FLASH_ATTR 
+display_dec_byte(uint8_t byte)
+{
+    tm1637_dots_state(false);
+    uint8_t arr[] = {EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL};
+    arr[1] = byte > 99 ? byte / 100 : EMPTY_SYMBOL;
+    arr[2] = byte > 9 ? byte % 100 / 10 : EMPTY_SYMBOL;
+    arr[3] = byte % 10;
+    tm1637_display(arr);
+}
+
+void ICACHE_FLASH_ATTR 
+display_clear()
+{
+    tm1637_dots_state(false);
+    uint8_t arr[] = {EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL};
+    tm1637_display(arr);
+}

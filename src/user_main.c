@@ -14,11 +14,11 @@
 #include "ntp_client.h"
 #include "display_api.h"
 
-
-
 #define LOCAL_PORT 1025
 #define REMOTE_PORT 1024
-#define WIFI_SCAN_DELAY 10000
+
+#define WIFI_CONNECTING_WAIT 12000
+#define WIFI_CONNECTING_ANIMATION 1000
 
 calibr_struct calibr;
 
@@ -27,12 +27,16 @@ const char* DEVICE_NAME = "ESP";
 static void loop();
 
 
-static os_timer_t wifi_scan_timer;
+static os_timer_t wifi_connecting_timer;
 static os_timer_t ntp_sync_timer;
 static os_timer_t meteo_sync_timer;
 static os_timer_t display_timer;
+static os_timer_t display_ip_timer;
+
 
 static os_timer_t test_timer;
+
+bool is_sta_got_ip = false;
 
 yandex_wheather_t weather = {0};
 
@@ -99,24 +103,38 @@ http_callback_nikita(char * response, int http_status, char * full_response)
 	}
 }
 
-
-void wifi_handle_event_cb(System_Event_t *evt)
+void ICACHE_FLASH_ATTR 
+wifi_handle_event_cb(System_Event_t *evt)
 {
 	if(evt->event != EVENT_SOFTAPMODE_PROBEREQRECVED)os_printf("event: %d\n", evt->event);
 	switch(evt->event){
 		case EVENT_STAMODE_GOT_IP:
 			os_printf("connected");
-            os_timer_disarm(&wifi_scan_timer); //disable timer to ap mode
+            //display_ip_timer_start();
+            is_sta_got_ip = true;
+            os_timer_arm(&wifi_connecting_timer, 50, 1);
+            os_timer_arm(&display_ip_timer, 1000, 1);
             meteo_sync_start();
             ntp_sync_start();
 		break;
+        case EVENT_STAMODE_DISCONNECTED:
+            is_sta_got_ip = false;
+		break;
+        case EVENT_SOFTAPMODE_STACONNECTED:
+            display_soft_ap(wifi_softap_get_station_num());
+		break;
+        case EVENT_SOFTAPMODE_STADISCONNECTED:
+            display_soft_ap(wifi_softap_get_station_num());
+		break;
+        
 	}
 }
 
-
-void enable_softap()
+void ICACHE_FLASH_ATTR 
+enable_softap()
 {
     os_printf("---------------enabling softapp-------------\r\n");
+    display_soft_ap(0);
     wifi_set_opmode(SOFTAP_MODE);
     struct softap_config softapConf;
     os_memcpy(&softapConf.ssid, "Wifarometr", 10);
@@ -145,6 +163,52 @@ void enable_softap()
     wifi_softap_set_dhcps_lease(&dhcp_lease);
 
     wifi_softap_dhcps_start();
+
+}
+
+void ICACHE_FLASH_ATTR
+display_ip_timer_start()
+{
+    static uint8_t stage = 1;
+    static bool display_pause = true;
+    static struct ip_info ip_inf = {0};
+    display_pause = !display_pause;
+    if(display_pause)
+    {
+        display_clear();
+        return;
+    } 
+    switch (stage)
+    {
+    case 1:
+        display_ip();
+        wifi_get_ip_info(STATION_IF, &ip_inf);
+        stage = 2;
+        break;
+    case 2:
+        display_dec_byte(ip_inf.ip.addr & 0xFF);
+        stage = 3;
+        break;
+    case 3:
+        display_dec_byte(ip_inf.ip.addr >> 8 & 0xFF);
+        stage = 4;
+        break;
+    case 4:
+        display_dec_byte(ip_inf.ip.addr >> 16 & 0xFF);
+        stage = 5;
+        break;
+    case 5:
+        display_dec_byte(ip_inf.ip.addr >> 24 & 0xFF);
+        stage = 6;
+        break;
+    case 6:
+        display_dec_byte(ip_inf.ip.addr >> 24 & 0xFF);
+        stage = 1;
+        os_timer_disarm(&display_ip_timer);
+        display_clear();
+        display_timer_start();
+        break;
+    }
 
 }
 
@@ -259,48 +323,47 @@ test_timer_start()
     count++;
 }
 
+void ICACHE_FLASH_ATTR 
+wifi_connecting_timer_start()
+{
+    static uint16_t count = 0;
+    if(count * WIFI_CONNECTING_ANIMATION > WIFI_CONNECTING_WAIT)
+    {
+        os_timer_disarm(&wifi_connecting_timer);
+        if(!is_sta_got_ip) enable_softap();
+        return;
+    }
+    if(count == 0) circle_animation_stage(true);
+    else circle_animation_stage(false);
+    count++;
+
+    //anim stage 
+}
 
 void ICACHE_FLASH_ATTR 
 user_init(void)
 {
-    
-   // gpio_init();
-    uart_init(115200, 115200);   
-    //tm1637_init();
+    uart_init(115200, 115200);
+
     display_init();
-    uint8_t arr[] = {16,2,3,4};
-    tm1637_display(arr);
+
     spi_flash_read(0x8c000, &calibr, sizeof(calibr_struct));
     print_calibr();
     user_tcpserver_init(80); 
-    // for(uint8_t i = 0; i < 255; i++)
-    // {
-    //   //  tm1637_write_byte(i);
-    //     tm1637_dots_state(1);
-    //     system_soft_wdt_feed();
-    //     for(uint16_t j = 0; j < 300; j++) os_delay_us(1000);
-    //     tm1637_dots_state(0);
-    //     system_soft_wdt_feed();
-    //     for(uint16_t j = 0; j < 300; j++) os_delay_us(1000);
-    // } 
+
     wifi_set_opmode(STATION_MODE);
 	struct station_config stationConf;
 	stationConf.bssid_set = 0;
 	os_memcpy(&stationConf.ssid, calibr.ssid, SSID_BUF_SIZE);
 	os_memcpy(&stationConf.password, calibr.passwd, PASSWD_BUF_SIZE);
     
-	
-    
     wifi_station_set_config(&stationConf);
 	wifi_set_event_handler_cb(wifi_handle_event_cb);
-	wifi_station_set_hostname(calibr.hostname);
-	
+	wifi_station_set_hostname(calibr.hostname); 
 
-    
-
-    os_timer_disarm(&wifi_scan_timer);
-    os_timer_setfn(&wifi_scan_timer, (os_timer_func_t *)enable_softap, NULL);
-    os_timer_arm(&wifi_scan_timer, WIFI_SCAN_DELAY, 0); //timer for wait wifi connectinf else use softap mode
+    os_timer_disarm(&wifi_connecting_timer);
+    os_timer_setfn(&wifi_connecting_timer, (os_timer_func_t *)wifi_connecting_timer_start, NULL);
+    os_timer_arm(&wifi_connecting_timer, WIFI_CONNECTING_ANIMATION, 1); //timer for wait wifi connectinf else use softap mode
 
     os_timer_disarm(&ntp_sync_timer);
     os_timer_setfn(&ntp_sync_timer, (os_timer_func_t *)ntp_sync_start, NULL);
@@ -310,10 +373,10 @@ user_init(void)
 
     os_timer_disarm(&display_timer);
     os_timer_setfn(&display_timer, (os_timer_func_t *)display_timer_start, NULL);
-    display_timer_start();
+
+    os_timer_disarm(&display_ip_timer);
+    os_timer_setfn(&display_ip_timer, (os_timer_func_t *)display_ip_timer_start, NULL);
 
     os_timer_disarm(&test_timer);
     os_timer_setfn(&test_timer, (os_timer_func_t *)test_timer_start, NULL);
-    //os_timer_arm(&test_timer, 200, 1); 
-
 }

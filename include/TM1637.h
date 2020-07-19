@@ -40,6 +40,7 @@
 
 void tm1637_init();
 void tm1637_display(uint8_t* disp_data);
+void tm1637_display_raw(uint8_t* disp_data);
 void tm1637_dots_state(bool state);
 
 #endif
