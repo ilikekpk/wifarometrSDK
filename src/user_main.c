@@ -215,7 +215,7 @@ display_ip_timer_start()
 void ICACHE_FLASH_ATTR 
 ntp_sync_start()
 {
-    ntp_get_time("0.ru.pool.ntp.org", 123);
+    ntp_get_time("ntp2.stratum2.ru", 123);
     os_timer_arm(&ntp_sync_timer, calibr.clock_update_timer * 1000, 0);
     //display_time(ntp_epoch);
 }
