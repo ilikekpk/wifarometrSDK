@@ -2,11 +2,11 @@
 #include "osapi.h"
 #include "gpio.h"
 
-#define CLK_LOW GPIO_OUTPUT_SET(4, 0)
-#define CLK_HIGH GPIO_OUTPUT_SET(4, 1)
+#define CLK_LOW GPIO_OUTPUT_SET(5, 0)
+#define CLK_HIGH GPIO_OUTPUT_SET(5, 1)
 
-#define DATA_LOW GPIO_OUTPUT_SET(5, 0)
-#define DATA_HIGH GPIO_OUTPUT_SET(5, 1)
+#define DATA_LOW GPIO_OUTPUT_SET(4, 0)
+#define DATA_HIGH GPIO_OUTPUT_SET(4, 1)
 
 
 //************definitions for TM1637*********************
@@ -141,7 +141,7 @@ static void send_array(uint8_t* array)
   for(uint8_t i = 0; i < 4; i++) write_byte(array[i] | dots_state);
   stop(); 
   start();
-  write_byte(0x88 + 0x07); //bright
+  write_byte(0x88 + 0x05); //bright
   stop();
 }
 
