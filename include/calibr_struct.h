@@ -52,8 +52,13 @@ typedef struct
     char latitude[20];
     char longitude[20];
 
+    uint8_t crc8_maxim;
+
 } calibr_struct;
 
+void calculate_calibr_crc();
+bool check_calibr_crc();
+void set_default_calibr();
 
 extern calibr_struct calibr;
 

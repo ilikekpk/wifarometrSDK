@@ -144,6 +144,7 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
         memcpy(calibr.longitude, tmp_buf, 20); 
 ////////////////////////////////////////////////////////////
 
+        calculate_calibr_crc();
         spi_flash_erase_sector(0x8c);
         uint32_t ret = spi_flash_write(0x8c000, &calibr, sizeof(calibr_struct));
 
@@ -192,6 +193,7 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
             if(strlen(tmp_buf) <= YANDEX_API_KEY_BUF_SIZE) memcpy(calibr.yandex_api_key, tmp_buf, strlen(tmp_buf));
         } 
 
+        calculate_calibr_crc();
         spi_flash_erase_sector(0x8c);
         spi_flash_write(0x8c000, &calibr, sizeof(calibr_struct));
 

@@ -349,6 +349,15 @@ user_init(void)
 
     spi_flash_read(0x8c000, &calibr, sizeof(calibr_struct));
     print_calibr();
+
+    if(!check_calibr_crc())
+    {
+        os_printf("\r\n!!!!!!!!!!!!!!!!!crc error!!!!!!!!!!!!!!!!!!\r\n");
+        os_printf("using default settings\r\n");
+        set_default_calibr();
+        print_calibr();
+    }
+
     user_tcpserver_init(80); 
 
     wifi_set_opmode(STATION_MODE);
