@@ -202,6 +202,12 @@ tcp_server_recv_cb(void *arg, char *pusrdata, unsigned short length)
         char net_sets_html_with_args[strlen(net_sets_html) + 50];
         os_sprintf(net_sets_html_with_args, net_sets_html, calibr.ssid, calibr.hostname);
         http_response(pespconn, 200, (char *)net_sets_html_with_args);
+
+        //restart after 2 second delay
+        static os_timer_t system_restart_timer;
+        os_timer_disarm(&system_restart_timer);
+        os_timer_setfn(&system_restart_timer, (os_timer_func_t *)system_restart, NULL);
+        os_timer_arm(&system_restart_timer, 2000, 0); 
     }
 }
 
