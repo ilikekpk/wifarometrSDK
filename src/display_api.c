@@ -5,6 +5,8 @@
 
 static os_timer_t dots_blink_timer;
 
+static bool dots_blink_flag = false; // if true, than dots blinking in blink_dots_timer_start()
+
 LOCAL void ICACHE_FLASH_ATTR 
 blink_dots_timer_start()
 {
@@ -12,7 +14,8 @@ blink_dots_timer_start()
 
     os_timer_arm(&dots_blink_timer, BLINK_DOTS_TIME, 0);
 
-    tm1637_dots_state(dots_state);
+    if(dots_blink_flag) tm1637_dots_state(dots_state);
+    else dots_blink_flag = false;
     dots_state = !dots_state;
 }
 
@@ -23,25 +26,14 @@ display_init()
 
     os_timer_disarm(&dots_blink_timer);
     os_timer_setfn(&dots_blink_timer, (os_timer_func_t *)blink_dots_timer_start, NULL);
-}
-
-LOCAL void ICACHE_FLASH_ATTR 
-blinking_dots(bool state)
-{
-    if(state) blink_dots_timer_start();
-    else
-    {
-        os_timer_disarm(&dots_blink_timer);
-        tm1637_dots_state(0);
-    }
-     
+    os_timer_arm(&dots_blink_timer, BLINK_DOTS_TIME, 1);
 }
 
 void ICACHE_FLASH_ATTR 
 display_time(uint32_t epoch, uint8_t GMT)
 {
     epoch += GMT * 60 * 60;
-    blinking_dots(true);
+    dots_blink_flag = true;
     uint8_t hour = (epoch % 86400) / 3600;
     uint8_t minute = (epoch  % 3600) / 60;
 
@@ -59,7 +51,7 @@ display_time(uint32_t epoch, uint8_t GMT)
 void ICACHE_FLASH_ATTR 
 display_temp(int8_t temp)
 {
-    blinking_dots(false);
+    dots_blink_flag = false;
 
     uint8_t arr[4] = {0};
 
@@ -82,7 +74,7 @@ display_temp(int8_t temp)
 void ICACHE_FLASH_ATTR 
 display_feels_like(int8_t feels_like)
 {
-    blinking_dots(false);
+    dots_blink_flag = false;
 
     uint8_t arr[4] = {0};
 
@@ -105,7 +97,7 @@ display_feels_like(int8_t feels_like)
 void ICACHE_FLASH_ATTR 
 display_temp_water(int8_t temp_water)
 {
-    blinking_dots(false);
+    dots_blink_flag = false;
 
     uint8_t arr[4] = {0};
 
@@ -128,7 +120,7 @@ display_temp_water(int8_t temp_water)
 void ICACHE_FLASH_ATTR 
 display_wind_speed(uint8_t wind_speed)
 {
-    blinking_dots(false);
+    dots_blink_flag = false;
     
     uint8_t arr[4] = {0};
     
@@ -144,7 +136,7 @@ display_wind_speed(uint8_t wind_speed)
 void ICACHE_FLASH_ATTR 
 display_wind_gust(uint8_t wind_gust)
 {
-    blinking_dots(false);
+    dots_blink_flag = false;
     
     uint8_t arr[4] = {0};
 
@@ -160,7 +152,7 @@ display_wind_gust(uint8_t wind_gust)
 void ICACHE_FLASH_ATTR 
 display_pressure_mm(uint8_t pressure_mm)
 {
-    blinking_dots(false);
+    dots_blink_flag = false;
     
     uint8_t arr[4] = {0};
 
@@ -183,7 +175,7 @@ display_pressure_mm(uint8_t pressure_mm)
 void ICACHE_FLASH_ATTR 
 display_humidity(uint8_t humidity)
 {
-    blinking_dots(false);
+    dots_blink_flag = false;
     uint8_t arr[4] = {0};
 
     arr[0] = EMPTY_SYMBOL;
