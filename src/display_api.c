@@ -32,19 +32,21 @@ display_init()
 void ICACHE_FLASH_ATTR 
 display_time(uint32_t epoch, uint8_t GMT)
 {
-    epoch += GMT * 60 * 60;
+    uint8_t arr[4] = {MINUS_SYMBOL, MINUS_SYMBOL, MINUS_SYMBOL, MINUS_SYMBOL};  
     dots_blink_flag = true;
-    uint8_t hour = (epoch % 86400) / 3600;
-    uint8_t minute = (epoch  % 3600) / 60;
-
-    uint8_t arr[4] = {0};
-
-    if(hour / 10 == 0) arr[0] = EMPTY_SYMBOL;
-    else arr[0] = hour / 10;
-    arr[1] = hour % 10;
-    arr[2] = minute / 10;
-    arr[3] = minute % 10;
-
+    tm1637_dots_state(false);
+    
+    if(epoch != 0)
+    {
+        epoch += GMT * 60 * 60;
+        uint8_t hour = (epoch % 86400) / 3600;
+        uint8_t minute = (epoch  % 3600) / 60;
+        if(hour / 10 == 0) arr[0] = EMPTY_SYMBOL;
+        else arr[0] = hour / 10;
+        arr[1] = hour % 10;
+        arr[2] = minute / 10;
+        arr[3] = minute % 10;
+    }
     tm1637_display(arr);
 }
 
