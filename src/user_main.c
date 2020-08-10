@@ -17,9 +17,6 @@
 #define LOCAL_PORT 1025
 #define REMOTE_PORT 1024
 
-#define WIFI_CONNECTING_WAIT 12000
-#define WIFI_CONNECTING_ANIMATION 1000
-
 calibr_struct calibr;
 
 
@@ -32,13 +29,16 @@ static os_timer_t ntp_sync_timer;
 static os_timer_t meteo_sync_timer;
 static os_timer_t display_timer;
 static os_timer_t display_ip_timer;
-
+static os_timer_t wifi_status_timer;
+static os_timer_t wifi_connecting_animation_timer;
 
 static os_timer_t test_timer;
 
-bool is_sta_got_ip = false;
 
 yandex_wheather_t weather = {0};
+
+void ICACHE_FLASH_ATTR
+wifi_status_timer_start();
 
 /******************************************************************************
  * FunctionName : user_rf_cal_sector_set
@@ -106,19 +106,13 @@ http_callback_nikita(char * response, int http_status, char * full_response)
 void ICACHE_FLASH_ATTR 
 wifi_handle_event_cb(System_Event_t *evt)
 {
-	if(evt->event != EVENT_SOFTAPMODE_PROBEREQRECVED)os_printf("event: %d\n", evt->event);
+	if(evt->event != EVENT_SOFTAPMODE_PROBEREQRECVED) os_printf("event: %d\n", evt->event);
 	switch(evt->event){
 		case EVENT_STAMODE_GOT_IP:
-			os_printf("connected");
-            //display_ip_timer_start();
-            is_sta_got_ip = true;
-            os_timer_arm(&wifi_connecting_timer, 50, 1);
-            os_timer_arm(&display_ip_timer, 1000, 1);
-            meteo_sync_start();
-            ntp_sync_start();
+			
 		break;
-        case EVENT_STAMODE_DISCONNECTED:
-            is_sta_got_ip = false;
+        case EVENT_STAMODE_DISCONNECTED:           
+
 		break;
         case EVENT_SOFTAPMODE_STACONNECTED:
             display_soft_ap(wifi_softap_get_station_num());
@@ -323,21 +317,81 @@ test_timer_start()
     count++;
 }
 
-void ICACHE_FLASH_ATTR 
-wifi_connecting_timer_start()
-{
-    static uint16_t count = 0;
-    if(count * WIFI_CONNECTING_ANIMATION > WIFI_CONNECTING_WAIT)
-    {
-        os_timer_disarm(&wifi_connecting_timer);
-        if(!is_sta_got_ip) enable_softap();
-        return;
-    }
-    if(count == 0) circle_animation_stage(true);
-    else circle_animation_stage(false);
-    count++;
 
-    //anim stage 
+void ICACHE_FLASH_ATTR
+disarm_all_timers()
+{
+    os_timer_disarm(&wifi_connecting_timer);
+    os_timer_disarm(&ntp_sync_timer);
+    os_timer_disarm(&meteo_sync_timer);
+    os_timer_disarm(&display_timer);
+    os_timer_disarm(&display_ip_timer);
+   // os_timer_disarm(&wifi_status_timer);
+    os_timer_disarm(&wifi_connecting_animation_timer);
+}
+
+void ICACHE_FLASH_ATTR
+wifi_status_timer_start()
+{
+    //display_ssid_err_stage(false);
+    static bool is_first_boot = true;
+    static uint8_t search_ap_count = 0;
+    static uint8_t last_status = 255;
+    uint8_t status = wifi_station_get_connect_status();
+
+    if(status == last_status) return;
+
+    last_status = status;
+
+    switch (status)
+    {
+        case STATION_IDLE:
+            break;
+            os_printf("STATION_IDLE\r\n");
+        case STATION_CONNECTING:
+            os_printf("STATION_CONNECTING\r\n");
+            disarm_all_timers();
+            os_timer_arm(&wifi_connecting_animation_timer, 200, 1);
+            break;
+        case STATION_WRONG_PASSWORD:
+            os_printf("STATION_WRONG_PASSWORD\r\n");
+            break;
+        case STATION_NO_AP_FOUND:
+            os_printf("STATION_NO_AP_FOUND\r\n");           
+
+            disarm_all_timers();
+            
+            if(is_first_boot) 
+            {
+                is_first_boot = false;
+                enable_softap();
+            }
+            else  display_no_ap();
+
+            break;
+        case STATION_CONNECT_FAIL:
+            os_printf("STATION_CONNECT_FAIL\r\n");
+            break;
+        case STATION_GOT_IP:
+            os_printf("STATION_GOT_IP\r\n");
+
+            disarm_all_timers();
+
+            os_timer_arm(&display_ip_timer, 500, 1);
+         
+
+            meteo_sync_start();
+            ntp_sync_start();
+
+            is_first_boot = false;
+            break;
+    }
+}
+
+void ICACHE_FLASH_ATTR
+wifi_connecting_animation_timer_start()
+{
+    down_line_animation_stage(false);
 }
 
 void ICACHE_FLASH_ATTR 
@@ -370,9 +424,9 @@ user_init(void)
 	wifi_set_event_handler_cb(wifi_handle_event_cb);
 	wifi_station_set_hostname(calibr.hostname); 
 
-    os_timer_disarm(&wifi_connecting_timer);
-    os_timer_setfn(&wifi_connecting_timer, (os_timer_func_t *)wifi_connecting_timer_start, NULL);
-    os_timer_arm(&wifi_connecting_timer, WIFI_CONNECTING_ANIMATION, 1); //timer for wait wifi connectinf else use softap mode
+    //os_timer_disarm(&wifi_connecting_timer);
+    //os_timer_setfn(&wifi_connecting_timer, (os_timer_func_t *)wifi_connecting_timer_start, NULL);
+    //os_timer_arm(&wifi_connecting_timer, WIFI_CONNECTING_ANIMATION, 1); //timer for wait wifi connectinf else use softap mode
 
     os_timer_disarm(&ntp_sync_timer);
     os_timer_setfn(&ntp_sync_timer, (os_timer_func_t *)ntp_sync_start, NULL);
@@ -385,6 +439,13 @@ user_init(void)
 
     os_timer_disarm(&display_ip_timer);
     os_timer_setfn(&display_ip_timer, (os_timer_func_t *)display_ip_timer_start, NULL);
+
+    os_timer_disarm(&wifi_status_timer);
+    os_timer_setfn(&wifi_status_timer, (os_timer_func_t *)wifi_status_timer_start, NULL);
+    os_timer_arm(&wifi_status_timer, 1000, 1);
+
+    os_timer_disarm(&wifi_connecting_animation_timer);
+    os_timer_setfn(&wifi_connecting_animation_timer, (os_timer_func_t *)wifi_connecting_animation_timer_start, NULL);
 
     os_timer_disarm(&test_timer);
     os_timer_setfn(&test_timer, (os_timer_func_t *)test_timer_start, NULL);

@@ -34,7 +34,7 @@ void ICACHE_FLASH_ATTR
 wind_animation_stage(bool new_start);
 
 void ICACHE_FLASH_ATTR 
-circle_animation_stage(bool new_start);
+down_line_animation_stage(bool new_start);
 
 void ICACHE_FLASH_ATTR 
 display_soft_ap(uint8_t clients_quantity);
@@ -44,6 +44,9 @@ display_ip();
 
 void ICACHE_FLASH_ATTR 
 display_dec_byte(uint8_t byte);
+
+void ICACHE_FLASH_ATTR
+display_no_ap();
 
 void ICACHE_FLASH_ATTR 
 display_clear();
