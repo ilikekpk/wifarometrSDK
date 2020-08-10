@@ -150,7 +150,7 @@ display_wind_gust(uint8_t wind_gust)
 }
 
 void ICACHE_FLASH_ATTR 
-display_pressure_mm(uint8_t pressure_mm)
+display_pressure_mm(uint16_t pressure_mm)
 {
     dots_blink_flag = false;
     
