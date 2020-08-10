@@ -52,6 +52,7 @@ void ICACHE_FLASH_ATTR
 display_temp(int8_t temp)
 {
     dots_blink_flag = false;
+    tm1637_dots_state(false);
 
     uint8_t arr[4] = {0};
 
@@ -75,6 +76,7 @@ void ICACHE_FLASH_ATTR
 display_feels_like(int8_t feels_like)
 {
     dots_blink_flag = false;
+    tm1637_dots_state(false);
 
     uint8_t arr[4] = {0};
 
@@ -98,6 +100,7 @@ void ICACHE_FLASH_ATTR
 display_temp_water(int8_t temp_water)
 {
     dots_blink_flag = false;
+    tm1637_dots_state(false);
 
     uint8_t arr[4] = {0};
 
@@ -121,6 +124,7 @@ void ICACHE_FLASH_ATTR
 display_wind_speed(uint8_t wind_speed)
 {
     dots_blink_flag = false;
+    tm1637_dots_state(false);
     
     uint8_t arr[4] = {0};
     
@@ -137,6 +141,7 @@ void ICACHE_FLASH_ATTR
 display_wind_gust(uint8_t wind_gust)
 {
     dots_blink_flag = false;
+    tm1637_dots_state(false);
     
     uint8_t arr[4] = {0};
 
@@ -153,6 +158,7 @@ void ICACHE_FLASH_ATTR
 display_pressure_mm(uint16_t pressure_mm)
 {
     dots_blink_flag = false;
+    tm1637_dots_state(false);
     
     uint8_t arr[4] = {0};
 
@@ -176,6 +182,8 @@ void ICACHE_FLASH_ATTR
 display_humidity(uint8_t humidity)
 {
     dots_blink_flag = false;
+    tm1637_dots_state(false);
+
     uint8_t arr[4] = {0};
 
     arr[0] = EMPTY_SYMBOL;
@@ -189,6 +197,9 @@ display_humidity(uint8_t humidity)
 void ICACHE_FLASH_ATTR 
 wind_animation_stage(bool new_start)
 {
+    dots_blink_flag = false;
+    tm1637_dots_state(false);
+
     static uint8_t stage = 0;
     static uint8_t k = 1;
     if(new_start) stage = 0;
@@ -238,8 +249,9 @@ void ICACHE_FLASH_ATTR
 display_soft_ap(uint8_t clients_quantity)
 {
     dots_blink_flag = false;
-    uint8_t arr[] = {A_SYMBOL, P_SYMBOL, EMPTY_SYMBOL, clients_quantity};
     tm1637_dots_state(true);
+    
+    uint8_t arr[] = {A_SYMBOL, P_SYMBOL, EMPTY_SYMBOL, clients_quantity};
     tm1637_display(arr);
 }
 
