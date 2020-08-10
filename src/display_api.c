@@ -15,7 +15,7 @@ blink_dots_timer_start()
     os_timer_arm(&dots_blink_timer, BLINK_DOTS_TIME, 0);
 
     if(dots_blink_flag) tm1637_dots_state(dots_state);
-    else dots_blink_flag = false;
+
     dots_state = !dots_state;
 }
 
@@ -202,6 +202,8 @@ wind_animation_stage(bool new_start)
 void ICACHE_FLASH_ATTR 
 circle_animation_stage(bool new_start)
 {
+    dots_blink_flag = false;
+    tm1637_dots_state(false);
     static uint8_t stage = 1;
 
     static uint8_t raw_arr[] = {0x00, 0x00, 0x00, 0x00};
@@ -255,6 +257,7 @@ circle_animation_stage(bool new_start)
 void ICACHE_FLASH_ATTR 
 display_soft_ap(uint8_t clients_quantity)
 {
+    dots_blink_flag = false;
     uint8_t arr[] = {A_SYMBOL, P_SYMBOL, EMPTY_SYMBOL, clients_quantity};
     tm1637_dots_state(true);
     tm1637_display(arr);
@@ -263,6 +266,7 @@ display_soft_ap(uint8_t clients_quantity)
 void ICACHE_FLASH_ATTR 
 display_ip()
 {
+    dots_blink_flag = false;
     tm1637_dots_state(true);
     uint8_t arr[] = {1, P_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL};
     tm1637_display(arr);
@@ -271,6 +275,7 @@ display_ip()
 void ICACHE_FLASH_ATTR 
 display_dec_byte(uint8_t byte)
 {
+    dots_blink_flag = false;
     tm1637_dots_state(false);
     uint8_t arr[] = {EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL};
     arr[1] = byte > 99 ? byte / 100 : EMPTY_SYMBOL;
@@ -279,9 +284,12 @@ display_dec_byte(uint8_t byte)
     tm1637_display(arr);
 }
 
+    dots_blink_flag = false;
+    tm1637_dots_state(false);
 void ICACHE_FLASH_ATTR 
 display_clear()
 {
+    dots_blink_flag = false;
     tm1637_dots_state(false);
     uint8_t arr[] = {EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL};
     tm1637_display(arr);
